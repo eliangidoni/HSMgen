@@ -1,0 +1,27 @@
+# Copyright (c) 2013 G. Elian Gidoni.
+##
+fsm-info inner{
+         first{
+                eventone -> second;
+         }
+         second{
+                eventtwo -> outa;
+         }
+         outa{}
+}
+
+fsm-info inner2{
+         chacha{}
+}
+
+fsm-info outer(inner,inner2){
+        state{
+               eventthree -> otherstate;
+               eventfour -> inner;
+        }
+        otherstate{
+                eventfour -> inner2;
+                eventbla -> nnn;
+        }
+        nnn{}
+}

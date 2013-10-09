@@ -1,0 +1,71 @@
+    HSMgen reads FSM definitions (in a mini-language) and generates C++ source
+    code. The generated code defines interfaces for each FSM and its
+    states. Transitions have associated guard conditions evaluated before
+    execution.
+
+
+                                  Dependencies
+
+1) Java 1.6.
+2) ANTLR 4 runtime (included in src/).
+
+
+                                     Build
+
+$ cd src
+$ . antlr-vars.sh
+$ javac HSMgenLexer.java HSMgenParser.java HSMgen.java
+
+
+                                     Usage
+
+$ java HSMgen <file>
+
+
+                                    Example
+
+$ java HSMgen ../example.fsm > ../example.h
+$ cd ..
+$ g++ example.cpp -o example
+$ ./example
+
+
+                               FSM mini-language
+
+1) Flat format
+
+fsm-info <FSM_NAME> {
+    <STATE_1> {
+        <EVENT_1> -> <STATE_X> ;
+        .
+        . 
+        <EVENT_N> -> <STATE_X> ;
+    }
+    .
+    .
+    <STATE_N> {
+        .
+        .
+    }
+}
+
+2) Hierarchical/Nested format
+
+fsm-info <FSM_NAME> (<NESTED_1>, .., <NESTED_N>) {
+    <STATE_1> {
+        <EVENT_1> -> <NESTED_X> ;
+        .
+        . 
+    }
+    .
+    .
+}
+
+3) Additional notes
+
+- The first defined FSM state is its initial state.
+- State names are global in scope, avoid duplicating them.
+- State names should be in lower case with optional underscores
+  (e.g. 'some_state').
+- Transition events should be in camel case (e.g. 'someEvent').
+- A state can have zero transitions (e.g. 'some_state{ }').
