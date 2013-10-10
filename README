@@ -1,7 +1,7 @@
     HSMgen reads FSM definitions (in a mini-language) and generates C++ source
     code. The generated code defines interfaces for each FSM and its
     states. Transitions have associated guard conditions evaluated before
-    execution.
+    execution and every state triggers (optional) enter/exit actions.
 
 
                                   Dependencies
@@ -21,13 +21,106 @@ $ javac HSMgenLexer.java HSMgenParser.java HSMgen.java
 
 $ java HSMgen <file>
 
-
-                                    Example
+Testing the FSM 'example.fsm',
 
 $ java HSMgen ../example.fsm > ../example.h
 $ cd ..
 $ g++ example.cpp -o example
 $ ./example
+
+
+                                    Example
+
+1) FSM code generation
+
+Given the input file,
+
+fsm-info example
+{
+    example_init
+    {
+        theEvent -> finished;
+    }
+    finished
+    {
+    }
+}
+
+The (relevant) C++ generated code would be,
+
+class Event
+{
+public:
+    int evCode;
+};
+
+class ExampleInitState
+{
+public:
+    virtual ~ExampleInitState(){ }
+    virtual void enterExampleInitState(){ }
+    virtual void exitExampleInitState(){ }
+
+    virtual bool theEvent_then_finished_guard(Event *e)=0;
+    virtual FinishedState* theEvent_then_finished(Event *e)=0;
+
+};
+
+class FinishedState
+{
+public:
+    virtual ~FinishedState(){ }
+    virtual void enterFinishedState(){ }
+    virtual void exitFinishedState(){ }
+
+};
+
+class ExampleFsmState
+{
+public:
+    virtual ~ExampleFsmState(){ }
+    virtual void enterExampleFsmState()=0;
+    virtual void exitExampleFsmState()=0;
+};
+
+class ExampleFsm : public FsmState
+{
+public:
+    enum EventCode {
+        EVENT_THEEVENT = 0,
+    };
+    void init(ExampleInitState* s, ExampleFsmState*fsmState);
+    virtual void enter();
+    virtual void exit();
+    virtual bool sendEvent(Event *e);
+};
+
+2) Initializing the FSM
+
+Every FSM has an init() function that receives two arguments:
+    - The FSM initial state implementation
+    - The FSM enter/exit actions (optional, can be NULL)
+
+Before sending any event enter() must be called. Similarly, when the FSM is no
+longer needed exit() must be called.
+NOTE: calls to enter() and exit() aren't needed for any FSM that is a nested
+state (i.e. returned by a state).
+
+3) Sending events
+
+Events are sent with sendEvent() which returns true if the event was handled,
+false otherwise (i.e. whether there is a valid transition).
+The following code sends event 'theEvent' to the above FSM 'ExampleFsm'.
+
+ExampleFsm f;
+Event e;
+f.init(...);
+f.enter();
+
+e.evCode = ExampleFsm::EVENT_THEEVENT;
+f.sendEvent(&e);
+
+f.exit();
 
 
                                FSM mini-language
